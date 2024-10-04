@@ -6,113 +6,128 @@
  */
 
 import React from 'react';
-import type {PropsWithChildren} from 'react';
+import { Button, Text, SafeAreaView, TextInput, View } from 'react-native';
 import {
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  useColorScheme,
-  View,
-} from 'react-native';
+  createWebView,
+  type BridgeWebView,
+  bridge,
+  useBridge,
+} from '@webview-bridge/react-native';
+import InAppBrowser from 'react-native-inappbrowser-reborn';
 
-import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
+type AppBridgeState = {
+  getMessage(): Promise<string>;
+  openInAppBrowser(url: string): Promise<void>;
+  count: number;
+  increase(): Promise<void>;
+  data: {
+    text: string;
+  };
+  setDataText(text: string): Promise<void>;
+};
 
-type SectionProps = PropsWithChildren<{
-  title: string;
-}>;
+export const appBridge = bridge<AppBridgeState>(({ get, set }) => ({
+  async getMessage() {
+    return "I'm from native" as const;
+  },
+  async openInAppBrowser(url: string) {
+    if (await InAppBrowser.isAvailable()) {
+      await InAppBrowser.open(url);
+    }
+  },
 
-function Section({children, title}: SectionProps): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
+  data: {
+    text: '',
+  },
+  count: 0,
+  async increase() {
+    set({
+      count: get().count + 1,
+    });
+  },
+  async setDataText(text) {
+    set({
+      data: {
+        text,
+      },
+    });
+  },
+}));
+
+// It is exported via the package.json type field.
+export type AppBridge = typeof appBridge;
+
+export const { WebView, linkWebMethod } = createWebView({
+  bridge: appBridge,
+  debug: true,
+  fallback: (method) => {
+    console.warn(`Method '${method}' not found in native`);
+  },
+});
+
+function Count() {
+  // render when count changed
+  const count = useBridge(appBridge, (state) => state.count);
+
+  return <Text>Native Count: {count}</Text>;
+}
+
+function Input() {
+  const { data, setDataText } = useBridge(appBridge);
+
   return (
-    <View style={styles.sectionContainer}>
+    <View style={{ justifyContent: 'center', alignItems: 'center' }}>
       <Text
-        style={[
-          styles.sectionTitle,
-          {
-            color: isDarkMode ? Colors.white : Colors.black,
-          },
-        ]}>
-        {title}
+        style={{
+          marginBottom: 10,
+          textAlign: 'center',
+        }}
+      >
+        Native Data Text: {data.text}
       </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark,
-          },
-        ]}>
-        {children}
-      </Text>
+      <TextInput
+        value={data.text}
+        onChangeText={setDataText}
+        style={{ borderWidth: 1, minWidth: '50%', maxWidth: '50%' }}
+      />
     </View>
   );
 }
 
-function App(): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
+function App(): JSX.Element {
+  const webviewRef = React.useRef<BridgeWebView>(null);
 
-  const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
-  };
+  const increase = useBridge(appBridge, (state) => state.increase);
 
   return (
-    <SafeAreaView style={backgroundStyle}>
-      <StatusBar
-        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-        backgroundColor={backgroundStyle.backgroundColor}
+    <SafeAreaView style={{ height: '100%' }}>
+      <WebView
+        ref={webviewRef}
+        source={
+          // { uri: 'http://localhost:3000' }
+          require('./web/dist/index.html')
+        }
+        style={{ height: '50%', width: '100%', borderWidth: 1 }}
       />
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        style={backgroundStyle}>
-        <Header />
-        <View
-          style={{
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
-          }}>
-          <Section title="Step One">
-            Edit <Text style={styles.highlight}>App.tsx</Text> to change this
-            screen and then come back to see your edits.
-          </Section>
-          <Section title="See Your Changes">
-            <ReloadInstructions />
-          </Section>
-          <Section title="Debug">
-            <DebugInstructions />
-          </Section>
-          <Section title="Learn More">
-            Read the docs to discover what to do next:
-          </Section>
-          <LearnMoreLinks />
-        </View>
-      </ScrollView>
+
+      <View
+        style={{
+          justifyContent: 'center',
+          alignItems: 'center',
+          height: '50%',
+        }}
+      >
+        <Text style={{ fontSize: 20, fontWeight: '700', marginBottom: 10 }}>
+          This is Native1
+        </Text>
+
+        <Count />
+        <Button onPress={() => increase()} title="Increase From Native" />
+
+        <Input />
+      </View>
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
-  },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-  },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
-  },
-  highlight: {
-    fontWeight: '700',
-  },
-});
 
 export default App;
