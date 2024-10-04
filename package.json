@@ -51,9 +51,7 @@
     "style-loader": "^4.0.0",
     "typescript": "5.0.4",
     "vite": "^5.4.8",
-    "vite-plugin-singlefile": "^2.0.2",
-    "webpack-cli": "^5.1.4",
-    "webpack-dev-server": "^5.1.0"
+    "vite-plugin-singlefile": "^2.0.2"
   },
   "engines": {
     "node": ">=18"
