@@ -104,7 +104,7 @@ function App(): JSX.Element {
       <WebView
         ref={webviewRef}
         source={
-          // { uri: 'http://localhost:3000' }
+          // { uri: 'http://localhost:5173' }
           require('./web/dist/index.html')
         }
         style={{ height: '50%', width: '100%', borderWidth: 1 }}

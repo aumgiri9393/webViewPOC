@@ -2,7 +2,7 @@ import "./App.css";
 import { linkBridge } from "@webview-bridge/web";
 import { useBridge } from "@webview-bridge/react";
 
-import { AppBridge } from "/Users/aum/ApplicationDevelopment/webViewPOC/App";
+import { AppBridge } from "../../App";
 // import Linechart from "./Linechart";
 import { useEffect, useState } from "react";
 import React from "react";
