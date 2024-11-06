@@ -1,30 +1,21 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- */
-
-import React from 'react';
-import { Button, Text, SafeAreaView, TextInput, View } from 'react-native';
+import React, { useState } from "react";
+import { Button, Text, SafeAreaView, View, TextInput } from "react-native";
 import {
   createWebView,
   type BridgeWebView,
   bridge,
   useBridge,
-} from '@webview-bridge/react-native';
-import InAppBrowser from 'react-native-inappbrowser-reborn';
+  type Bridge,
+} from "@webview-bridge/react-native";
+import InAppBrowser from "react-native-inappbrowser-reborn";
 
-type AppBridgeState = {
+interface AppBridgeState extends Bridge {
   getMessage(): Promise<string>;
   openInAppBrowser(url: string): Promise<void>;
-  count: number;
-  increase(): Promise<void>;
-  data: {
-    text: string;
-  };
-  setDataText(text: string): Promise<void>;
-};
+  sharedText: string; // Single shared state for both WebViews
+  updateSharedTextForWebView1(text: string): Promise<void>; // Update function for WebView 1
+  updateSharedTextForWebView2(text: string): Promise<void>; // Update function for WebView 2
+}
 
 export const appBridge = bridge<AppBridgeState>(({ get, set }) => ({
   async getMessage() {
@@ -36,26 +27,20 @@ export const appBridge = bridge<AppBridgeState>(({ get, set }) => ({
     }
   },
 
-  data: {
-    text: '',
-  },
-  count: 0,
-  async increase() {
+  sharedText: "", // Initial shared text value
+
+  async updateSharedTextForWebView1(text) {
     set({
-      count: get().count + 1,
+      sharedText: `WebView 1: ${text}`, 
     });
   },
-  async setDataText(text) {
+
+  async updateSharedTextForWebView2(text) {
     set({
-      data: {
-        text,
-      },
+      sharedText: `WebView 2: ${text}`,
     });
   },
 }));
-
-// It is exported via the package.json type field.
-export type AppBridge = typeof appBridge;
 
 export const { WebView, linkWebMethod } = createWebView({
   bridge: appBridge,
@@ -65,67 +50,74 @@ export const { WebView, linkWebMethod } = createWebView({
   },
 });
 
-function Count() {
-  // render when count changed
-  const count = useBridge(appBridge, (state) => state.count);
-
-  return <Text>Native Count: {count}</Text>;
-}
-
-function Input() {
-  const { data, setDataText } = useBridge(appBridge);
-
+function SharedTextDisplay() {
+  // Render the shared text when it changes
+  const sharedText = useBridge(appBridge, (state) => state.sharedText);
   return (
-    <View style={{ justifyContent: 'center', alignItems: 'center' }}>
-      <Text
-        style={{
-          marginBottom: 10,
-          textAlign: 'center',
-        }}
-      >
-        Native Data Text: {data.text}
-      </Text>
-      <TextInput
-        value={data.text}
-        onChangeText={setDataText}
-        style={{ borderWidth: 1, minWidth: '50%', maxWidth: '50%' }}
-      />
+    <View style={{ alignItems: "center", margin: 10 }}>
+      <Text>Shared Text: {sharedText}</Text>
     </View>
   );
 }
 
+function NativeInput() {
+  const [text, setText] = useState("");
+
+  const updateSharedTextForWebView1 = useBridge(appBridge, (state) => state.updateSharedTextForWebView1);
+  const updateSharedTextForWebView2 = useBridge(appBridge, (state) => state.updateSharedTextForWebView2);
+
+  return (
+    <View style={{ justifyContent: "center", alignItems: "center", marginTop: 20 }}>
+      <TextInput
+        value={text}
+        onChangeText={setText}
+        placeholder="Enter shared text"
+        style={{ borderWidth: 1, minWidth: "50%", maxWidth: "50%", marginBottom: 10 }}
+      />
+
+      {/* Buttons to send text to WebView 1 or WebView 2 */}
+      <View style={{ flexDirection: "row", justifyContent: "space-between", marginVertical: 10 }}>
+        <Button
+          title="Send to WebView 1"
+          onPress={() => updateSharedTextForWebView1(text)}
+        />
+        <Button
+          title="Send to WebView 2"
+          onPress={() => updateSharedTextForWebView2(text)}
+        />
+      </View>
+    </View>
+  );
+}
+
+export type AppBridge = typeof appBridge;
+
 function App(): JSX.Element {
   const webviewRef = React.useRef<BridgeWebView>(null);
 
-  const increase = useBridge(appBridge, (state) => state.increase);
-
   return (
-    <SafeAreaView style={{ height: '100%' }}>
+    <SafeAreaView style={{ height: "100%" }}>
+      {/* WebView 1 */}
       <WebView
         ref={webviewRef}
-        source={
-          // { uri: 'http://localhost:5173' }
-          require('./web/dist/index.html')
-        }
-        style={{ height: '50%', width: '100%', borderWidth: 1 }}
+        source={{
+          uri: "http://localhost:5173", // Same URL for both WebViews
+        }}
+        style={{ height: "25%", width: "100%" }}
       />
 
-      <View
-        style={{
-          justifyContent: 'center',
-          alignItems: 'center',
-          height: '50%',
+      {/* WebView 2 */}
+      <WebView
+        ref={webviewRef}
+        source={{
+          uri: "http://localhost:5173", // Same URL for both WebViews
         }}
-      >
-        <Text style={{ fontSize: 20, fontWeight: '700', marginBottom: 10 }}>
-          This is Native1
-        </Text>
+        style={{ height: "25%", width: "100%" }}
+      />
 
-        <Count />
-        <Button onPress={() => increase()} title="Increase From Native" />
+      <SharedTextDisplay />
 
-        <Input />
-      </View>
+      <NativeInput />
     </SafeAreaView>
   );
 }
