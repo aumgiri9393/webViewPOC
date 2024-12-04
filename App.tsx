@@ -6,127 +6,25 @@
  */
 
 import React from 'react';
-import { Button, Text, SafeAreaView, TextInput, View } from 'react-native';
-import {
-  createWebView,
-  type BridgeWebView,
-  bridge,
-  useBridge,
-} from '@webview-bridge/react-native';
-import InAppBrowser from 'react-native-inappbrowser-reborn';
+import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import Screen1 from './Screen1';
+import Screen2 from './Screen2';
+import Screen3 from './Screen3';
+import HomeScreen from './HomeScreen';
 
-type AppBridgeState = {
-  getMessage(): Promise<string>;
-  openInAppBrowser(url: string): Promise<void>;
-  count: number;
-  increase(): Promise<void>;
-  data: {
-    text: string;
-  };
-  setDataText(text: string): Promise<void>;
-};
+const Stack = createNativeStackNavigator();
 
-export const appBridge = bridge<AppBridgeState>(({ get, set }) => ({
-  async getMessage() {
-    return "I'm from native" as const;
-  },
-  async openInAppBrowser(url: string) {
-    if (await InAppBrowser.isAvailable()) {
-      await InAppBrowser.open(url);
-    }
-  },
-
-  data: {
-    text: '',
-  },
-  count: 0,
-  async increase() {
-    set({
-      count: get().count + 1,
-    });
-  },
-  async setDataText(text) {
-    set({
-      data: {
-        text,
-      },
-    });
-  },
-}));
-
-// It is exported via the package.json type field.
-export type AppBridge = typeof appBridge;
-
-export const { WebView, linkWebMethod } = createWebView({
-  bridge: appBridge,
-  debug: true,
-  fallback: (method) => {
-    console.warn(`Method '${method}' not found in native`);
-  },
-});
-
-function Count() {
-  // render when count changed
-  const count = useBridge(appBridge, (state) => state.count);
-
-  return <Text>Native Count: {count}</Text>;
-}
-
-function Input() {
-  const { data, setDataText } = useBridge(appBridge);
-
+function App() {
   return (
-    <View style={{ justifyContent: 'center', alignItems: 'center' }}>
-      <Text
-        style={{
-          marginBottom: 10,
-          textAlign: 'center',
-        }}
-      >
-        Native Data Text: {data.text}
-      </Text>
-      <TextInput
-        value={data.text}
-        onChangeText={setDataText}
-        style={{ borderWidth: 1, minWidth: '50%', maxWidth: '50%' }}
-      />
-    </View>
-  );
-}
-
-function App(): JSX.Element {
-  const webviewRef = React.useRef<BridgeWebView>(null);
-
-  const increase = useBridge(appBridge, (state) => state.increase);
-
-  return (
-    <SafeAreaView style={{ height: '100%' }}>
-      <WebView
-        ref={webviewRef}
-        source={
-          // { uri: 'http://localhost:5173' }
-          require('./web/dist/index.html')
-        }
-        style={{ height: '50%', width: '100%', borderWidth: 1 }}
-      />
-
-      <View
-        style={{
-          justifyContent: 'center',
-          alignItems: 'center',
-          height: '50%',
-        }}
-      >
-        <Text style={{ fontSize: 20, fontWeight: '700', marginBottom: 10 }}>
-          This is Native1
-        </Text>
-
-        <Count />
-        <Button onPress={() => increase()} title="Increase From Native" />
-
-        <Input />
-      </View>
-    </SafeAreaView>
+    <NavigationContainer>
+      <Stack.Navigator initialRouteName="Home">
+        <Stack.Screen name="Home" component={HomeScreen} />
+        <Stack.Screen name="Screen1" component={Screen1} />
+        <Stack.Screen name="Screen2" component={Screen2} />
+        <Stack.Screen name="Screen3" component={Screen3} />
+      </Stack.Navigator>
+    </NavigationContainer>
   );
 }
 

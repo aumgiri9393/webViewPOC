@@ -1,111 +1,36 @@
 import "./App.css";
-import { linkBridge } from "@webview-bridge/web";
+import { BridgeStore, linkBridge } from "@webview-bridge/web";
 import { useBridge } from "@webview-bridge/react";
 
-import { AppBridge } from "../../App";
+// import { AppBridge } from "../../App";
 // import Linechart from "./Linechart";
 import { useEffect, useState } from "react";
 import React from "react";
+import Webapp1 from "../../Webapp1";
+import Webapp2 from '../../Webapp2';
+import Webapp3 from '../../Webapp3'
+import { FeatureWebViewBridge } from "../../useWebViewBridge";
 
-const bridge = linkBridge<AppBridge>({
+const bridge = linkBridge<BridgeStore<FeatureWebViewBridge>>({
   throwOnError: true,
-  initialBridge: {
-    count: 10,
-    data: {
-      text: "Test",
-    },
-    increase: async () => {
-      alert("not support increase");
-    },
-    openInAppBrowser: async (url) => {
-      alert("not support openInAppBrowser: " + url);
-    },
-    setDataText: async (text) => {
-      alert("not support setDataText: " + text);
-    },
-    getMessage: async () => {
-      return "mocking message";
-    },
-  },
   onReady: () => {
-    console.log("bridge is ready");
+    console.log("app bridge is ready");
   },
 });
 
-function Count() {
-  const [nativeCount, setNativeCount] = useState(0);
-
-  // Fetch the native count when the component mounts (web app loads)
-  useEffect(() => {
-    const fetchNativeCount = async () => {
-      const currentCount = await bridge.store.getState().count;
-      console.log(currentCount);
-      setNativeCount(currentCount);
-    };
-
-    fetchNativeCount();
-  }, []);
-  // render when only count changed
-  const count = useBridge(bridge.store, (state) => state.count);
-
-  useEffect(() => {
-    setNativeCount(count);
-  }, [count]);
-
-  return <p>Native Count: {nativeCount}</p>;
-}
-
-function DataText() {
-  // render when only 'data.text' changed
-  const text = useBridge(bridge.store, (state) => state.data.text);
-
-  return (
-    <div>
-      <p>Native Data Text: {text}</p>
-      <input
-        type="text"
-        value={text}
-        onChange={(e) => bridge.setDataText(e.target.value)}
-      />
-
-    </div>
-  );
-}
-
-
 function App() {
-  const increase = useBridge(bridge.store, (state) => state.increase);
-
+  const feature = useBridge(bridge.store,(state)=> state.feature)
+  console.log("Feature: ",feature)
   return (
-    // <div>
-    //   <Linechart />
-    // </div>
-    <div>
-      <div>
-        {`isWebViewBridgeAvailable: ${String(bridge.isWebViewBridgeAvailable)}`}
-      </div>
-      <h2>This is WebView6</h2>
-      <button
-        onClick={() => {
-          if (bridge.isNativeMethodAvailable("openInAppBrowser") === true) {
-            bridge.openInAppBrowser("https://github.com/gronxb/webview-bridge");
-          }
-        }}
-      >
-        open InAppBrowser
-      </button>
-
-      <Count />
-      <button
-        onClick={() => {
-          increase(); // or bridge.increase()
-        }}
-      >
-        Increase from web
-      </button>
-      <DataText />
-    </div>
+    <>
+    {
+      feature==='web_app2'? <Webapp2/>
+    :
+    feature==='web_app1'? <Webapp1/> : 
+    feature==='web_app3'? <Webapp3/>:<div>No feature selected</div>
+    }
+    {/* <Webapp2/> */}
+     </>
   );
 }
-
 export default App;
