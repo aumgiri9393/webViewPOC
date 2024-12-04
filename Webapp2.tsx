@@ -2,8 +2,6 @@ import { BridgeStore, linkBridge } from '@webview-bridge/web';
 import { useBridge } from '@webview-bridge/react';
 import { AppBridgeState2 } from './Screen2';
 
-// import type { AppBridge } from "@webview-bridge-example-shared-state-integration-react/react-native/types";
-
 const bridge2 = linkBridge<BridgeStore<AppBridgeState2>>({
   throwOnError: true,
   initialBridge: {

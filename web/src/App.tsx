@@ -1,9 +1,6 @@
 import "./App.css";
 import { BridgeStore, linkBridge } from "@webview-bridge/web";
 import { useBridge } from "@webview-bridge/react";
-
-// import { AppBridge } from "../../App";
-// import Linechart from "./Linechart";
 import { useEffect, useState } from "react";
 import React from "react";
 import Webapp1 from "../../Webapp1";

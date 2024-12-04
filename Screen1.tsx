@@ -1,11 +1,6 @@
-// import "./App.css";
+import './App.css';
 import { useBridge } from '@webview-bridge/react';
-
-// import { AppBridge } from "../../App";
-// import Linechart from "./Linechart";
-// import { useEffect, useState } from 'react';
 import React from 'react';
-// import Webapp2 from './Webapp2';
 import { bridge, BridgeWebView } from '@webview-bridge/react-native';
 import InAppBrowser from 'react-native-inappbrowser-reborn';
 import { Button, SafeAreaView, Text, TextInput, View } from 'react-native';
